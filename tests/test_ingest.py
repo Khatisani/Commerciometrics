@@ -4,6 +4,7 @@ import duckdb
 from scripts.ingest_and_clean import run_ingestion
 from scripts.ingest_and_clean import run_cleaning_pipeline
 from scripts.ingest_and_clean import run_casting_pipeline
+from scripts.ingest_and_clean import run_remove_corrupted_pipeline
 
 def test_ingestion_raises_error_on_missing_csv():
     """
@@ -90,3 +91,31 @@ def test_casting_pipeline_types_and_revenue(tmp_path):
     assert float(total_revenue) == 24.50
     
     conn.close()
+
+
+
+def test_remove_corrupted_transactions(tmp_path):
+    """
+    Test that negative quantities, zero/negative prices, and non-product stock codes are removed.
+    """
+    
+    csv_file = tmp_path / "sample_retail_corrupted.csv"
+    csv_file.write_text(
+        "Invoice,StockCode,Description,Quantity,InvoiceDate,Price,Customer ID,Country\n"
+        "489434,85048,TEA SPOONS,5,2009-12-01 07:45:00,2.50,13085,United Kingdom\n"      
+        "489435,85049,COFFEE SPOONS,-2,2009-12-01 08:15:00,1.20,13085,United Kingdom\n"  
+        "489436,POST,POSTAGE,1,2009-12-01 09:00:00,15.00,13085,United Kingdom\n"        
+        "489437,85050,SUGAR SPOONS,3,2009-12-01 09:30:00,0.00,13085,United Kingdom\n"    
+    )
+    
+    db_file = str(tmp_path / "test_retail.duckdb")
+    
+    row_count = run_remove_corrupted_pipeline(db_path=db_file, csv_path=str(csv_file))
+    
+    assert row_count == 1
+    
+    conn = duckdb.connect(db_file)
+    stock_codes = [row[0] for row in conn.execute("SELECT StockCode FROM valid_transactions;").fetchall()]
+    conn.close()
+    
+    assert stock_codes == ['85048']

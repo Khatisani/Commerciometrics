@@ -103,7 +103,7 @@ def run_casting_pipeline(db_path: str = DEFAULT_DB_PATH, csv_path: str = DEFAULT
     int
         Total number of rows in the typed table.
     """
-    
+
     run_cleaning_pipeline(db_path=db_path, csv_path=csv_path)
     
     conn = duckdb.connect(db_path)
@@ -129,5 +129,37 @@ def run_casting_pipeline(db_path: str = DEFAULT_DB_PATH, csv_path: str = DEFAULT
     conn.close()
     return typed_row_count
 
+
+def run_remove_corrupted_pipeline(db_path: str = DEFAULT_DB_PATH, csv_path: str = DEFAULT_CSV_PATH) -> int:
+    """
+    Removes corrupted transaction rows (Quantity <= 0, Price <= 0, and non-product stock codes)
+    and stores clean commercial sales records in the 'valid_transactions' table.
+    
+    Returns:
+    --------
+    int
+        Total number of valid commercial transaction rows.
+    """
+
+    run_casting_pipeline(db_path=db_path, csv_path=csv_path)
+    
+    conn = duckdb.connect(db_path)
+    
+    print("Purging corrupted rows (Quantity <= 0, Price <= 0, and administrative stock codes)...")
+
+    conn.execute("""
+        CREATE OR REPLACE TABLE valid_transactions AS 
+        SELECT * FROM typed_transactions 
+        WHERE Quantity > 0 
+          AND Price > 0
+          AND StockCode NOT IN ('POST', 'DOT', 'M', 'BANK CHARGES', 'AMAZONFEE', 'CRUK', 'PADS', 'POSTAGE', 'C2', 'D');
+    """)
+    
+    valid_row_count = int(conn.execute("SELECT COUNT(*) FROM valid_transactions;").fetchone()[0])
+    print(f"Purge complete! Retained {valid_row_count:,} valid commercial transaction rows in 'valid_transactions'.")
+    
+    conn.close()
+    return valid_row_count
+
 if __name__ == "__main__":
-    run_casting_pipeline()
+    run_remove_corrupted_pipeline()
