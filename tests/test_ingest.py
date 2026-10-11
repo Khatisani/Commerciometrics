@@ -5,6 +5,8 @@ from scripts.ingest_and_clean import run_ingestion
 from scripts.ingest_and_clean import run_cleaning_pipeline
 from scripts.ingest_and_clean import run_casting_pipeline
 from scripts.ingest_and_clean import run_remove_corrupted_pipeline
+from scripts.ingest_and_clean import run_export_pipeline
+
 
 def test_ingestion_raises_error_on_missing_csv():
     """
@@ -119,3 +121,29 @@ def test_remove_corrupted_transactions(tmp_path):
     conn.close()
     
     assert stock_codes == ['85048']
+
+
+def test_export_cleaned_dataset_to_parquet(tmp_path):
+    """
+    Test that the cleaned dataset is successfully exported to a parquet staging file.
+    """
+    
+    csv_file = tmp_path / "sample_retail_export.csv"
+    csv_file.write_text(
+        "Invoice,StockCode,Description,Quantity,InvoiceDate,Price,Customer ID,Country\n"
+        "489434,85048,TEA SPOONS,5,2009-12-01 07:45:00,2.50,13085,United Kingdom\n"
+    )
+    
+    db_file = str(tmp_path / "test_retail.duckdb")
+    parquet_file = str(tmp_path / "clean_transactions.parquet")
+    
+    row_count = run_export_pipeline(db_path=db_file, csv_path=str(csv_file), export_path=parquet_file)
+    
+    assert row_count == 1
+    assert os.path.exists(parquet_file)
+
+    conn = duckdb.connect(db_file)
+    exported_count = conn.execute(f"SELECT COUNT(*) FROM read_parquet('{parquet_file}');").fetchone()[0]
+    conn.close()
+    
+    assert exported_count == 1

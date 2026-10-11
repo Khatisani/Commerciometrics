@@ -10,6 +10,7 @@ import duckdb
 
 DEFAULT_DB_PATH = "data/processed/retail.duckdb"
 DEFAULT_CSV_PATH = "data/raw/online_retail_II.csv"
+DEFAULT_EXPORT_PATH = "data/processed/clean_transactions.parquet"
 
 def run_ingestion(db_path: str = DEFAULT_DB_PATH, csv_path: str = DEFAULT_CSV_PATH) -> int:
     """
@@ -161,5 +162,33 @@ def run_remove_corrupted_pipeline(db_path: str = DEFAULT_DB_PATH, csv_path: str 
     conn.close()
     return valid_row_count
 
+def run_export_pipeline(db_path: str = DEFAULT_DB_PATH, csv_path: str = DEFAULT_CSV_PATH, export_path: str = DEFAULT_EXPORT_PATH) -> int:
+    """
+    Exports the validated, typed, and purged transaction table to a compressed Parquet staging file.
+    
+    Returns:
+    --------
+    int
+        Total number of rows exported to the Parquet staging layer.
+    """
+
+    run_remove_corrupted_pipeline(db_path=db_path, csv_path=csv_path)
+    
+    os.makedirs(os.path.dirname(export_path), exist_ok=True)
+    
+    conn = duckdb.connect(db_path)
+    
+    print(f"Exporting 'valid_transactions' to Parquet staging layer at {export_path}...")
+    
+    conn.execute(f"""
+        COPY valid_transactions TO '{export_path}' (FORMAT PARQUET, COMPRESSION 'SNAPPY');
+    """)
+    
+    export_row_count = int(conn.execute(f"SELECT COUNT(*) FROM read_parquet('{export_path}');").fetchone()[0])
+    print(f"Export complete! Successfully wrote {export_row_count:,} rows to Parquet staging layer.")
+    
+    conn.close()
+    return export_row_count
+
 if __name__ == "__main__":
-    run_remove_corrupted_pipeline()
+    run_export_pipeline()
