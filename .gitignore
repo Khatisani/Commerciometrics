@@ -7,6 +7,8 @@ data/processed/*
 
 __pycache__/
 *.py[cod]
+*$py.class
+.pytest_cache/
 .venv/
 env/
 .ipynb_checkpoints/
@@ -17,3 +19,5 @@ outputs/
 mlruns/
 .DS_Store
 .coverage
+htmlcov/
+*.duckdb
