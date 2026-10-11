@@ -18,7 +18,12 @@ def run_ingestion():
     
     conn.execute(f"""
         CREATE OR REPLACE TABLE raw_transactions AS 
-        SELECT * FROM read_csv_auto('{CSV_PATH}', ALL_VARCHAR=1);
+        SELECT * FROM read_csv_auto(
+            '{CSV_PATH}', 
+            ALL_VARCHAR=1, 
+            encoding='ISO-8859-1',
+            sample_size=-1
+        );
     """)
 
 
