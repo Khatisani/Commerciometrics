@@ -21,7 +21,7 @@ def run_ingestion():
         SELECT * FROM read_csv_auto(
             '{CSV_PATH}', 
             ALL_VARCHAR=1, 
-            encoding='ISO-8859-1',
+            encoding='latin-1',
             sample_size=-1
         );
     """)
