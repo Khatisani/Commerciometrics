@@ -10,8 +10,10 @@ __pycache__/
 .venv/
 env/
 .ipynb_checkpoints/
+.vscode/
 
 
 outputs/
 mlruns/
 .DS_Store
+.coverage
