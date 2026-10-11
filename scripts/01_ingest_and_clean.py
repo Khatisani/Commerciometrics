@@ -1,3 +1,9 @@
+"""
+Module: 01_ingest_and_clean.py
+Description: Ingests raw multi-year retail transaction CSV data into a local DuckDB 
+             staging database with robust handling for encoding and malformed rows.
+"""
+
 import os
 import pandas as pd
 import duckdb
@@ -6,6 +12,27 @@ DB_PATH = "data/processed/retail.duckdb"
 CSV_PATH = "data/raw/online_retail_II.csv"
 
 def run_ingestion():
+    """
+    Ingests the raw Online Retail II CSV dataset into a local DuckDB database.
+    
+    Parameters:
+    -----------
+    db_path : str
+        Filepath to the target local DuckDB database.
+    csv_path : str
+        Filepath to the source raw CSV dataset.
+        
+    Returns:
+    --------
+    int
+        Total number of valid rows successfully loaded into the 'raw_transactions' table.
+        
+    Raises:
+    -------
+    FileNotFoundError
+        If the raw CSV file is missing from the specified path.
+    """
+    
     os.makedirs("data/processed", exist_ok=True)
     
     if not os.path.exists(CSV_PATH):
