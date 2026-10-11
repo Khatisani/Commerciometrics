@@ -93,5 +93,41 @@ def run_cleaning_pipeline(db_path: str = DEFAULT_DB_PATH, csv_path: str = DEFAUL
     conn.close()
     return clean_row_count
 
+def run_casting_pipeline(db_path: str = DEFAULT_DB_PATH, csv_path: str = DEFAULT_CSV_PATH) -> int:
+    """
+    Casts cleaned transaction columns into appropriate numeric and temporal data types,
+    persisting the result in the 'typed_transactions' table.
+    
+    Returns:
+    --------
+    int
+        Total number of rows in the typed table.
+    """
+    
+    run_cleaning_pipeline(db_path=db_path, csv_path=csv_path)
+    
+    conn = duckdb.connect(db_path)
+    
+    print("Casting columns to appropriate data types (Quantity -> INTEGER, Price -> DECIMAL, InvoiceDate -> TIMESTAMP)...")
+    conn.execute("""
+        CREATE OR REPLACE TABLE typed_transactions AS 
+        SELECT 
+            CAST(Invoice AS VARCHAR) AS Invoice,
+            CAST(StockCode AS VARCHAR) AS StockCode,
+            CAST(Description AS VARCHAR) AS Description,
+            CAST(Quantity AS INTEGER) AS Quantity,
+            CAST(InvoiceDate AS TIMESTAMP) AS InvoiceDate,
+            CAST(Price AS DECIMAL(10,2)) AS Price,
+            CAST("Customer ID" AS VARCHAR) AS CustomerID,
+            CAST(Country AS VARCHAR) AS Country
+        FROM clean_transactions;
+    """)
+    
+    typed_row_count = int(conn.execute("SELECT COUNT(*) FROM typed_transactions;").fetchone()[0])
+    print(f"Casting complete! Staged {typed_row_count:,} strongly-typed rows into 'typed_transactions'.")
+    
+    conn.close()
+    return typed_row_count
+
 if __name__ == "__main__":
-    run_cleaning_pipeline()
+    run_casting_pipeline()

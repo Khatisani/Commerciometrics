@@ -3,6 +3,7 @@ import pytest
 import duckdb
 from scripts.ingest_and_clean import run_ingestion
 from scripts.ingest_and_clean import run_cleaning_pipeline
+from scripts.ingest_and_clean import run_casting_pipeline
 
 def test_ingestion_raises_error_on_missing_csv():
     """
@@ -53,10 +54,39 @@ def test_cleaning_filters_null_customer_ids(tmp_path):
     
     assert valid_rows == 1
     
-    import duckdb
     conn = duckdb.connect(db_file)
     customer_ids = conn.execute("SELECT \"Customer ID\" FROM clean_transactions;").fetchall()
     conn.close()
     
     assert len(customer_ids) == 1
     assert customer_ids[0][0] == '13085'
+
+def test_casting_pipeline_types_and_revenue(tmp_path):
+    """
+    Test that data types are correctly cast to numeric and timestamp, enabling calculations.
+    """
+    
+    csv_file = tmp_path / "sample_retail_types.csv"
+    csv_file.write_text(
+        "Invoice,StockCode,Description,Quantity,InvoiceDate,Price,Customer ID,Country\n"
+        "489434,85048,TEA SPOONS,5,2009-12-01 07:45:00,2.50,13085,United Kingdom\n"
+        "489435,85049,COFFEE SPOONS,10,2009-12-01 08:15:00,1.20,13085,United Kingdom\n"
+    )
+    
+    db_file = str(tmp_path / "test_retail.duckdb")
+
+    row_count = run_casting_pipeline(db_path=db_file, csv_path=str(csv_file))
+    assert row_count == 2
+    
+    conn = duckdb.connect(db_file)
+    
+    cols = {row[1]: row[2] for row in conn.execute("PRAGMA table_info('typed_transactions');").fetchall()}
+    
+    assert 'INTEGER' in cols['Quantity'].upper() or 'BIGINT' in cols['Quantity'].upper()
+    assert 'DECIMAL' in cols['Price'].upper() or 'DOUBLE' in cols['Price'].upper() or 'FLOAT' in cols['Price'].upper()
+    assert 'TIMESTAMP' in cols['InvoiceDate'].upper()
+    
+    total_revenue = conn.execute("SELECT SUM(Quantity * Price) FROM typed_transactions;").fetchone()[0]
+    assert float(total_revenue) == 24.50
+    
+    conn.close()
