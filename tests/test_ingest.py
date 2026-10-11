@@ -2,6 +2,7 @@ import os
 import pytest
 import duckdb
 from scripts.ingest_and_clean import run_ingestion
+from scripts.ingest_and_clean import run_cleaning_pipeline
 
 def test_ingestion_raises_error_on_missing_csv():
     """
@@ -30,3 +31,32 @@ def test_ingestion_creates_duckdb_table(tmp_path):
     conn.close()
     
     assert "raw_transactions" in tables
+
+def test_cleaning_filters_null_customer_ids(tmp_path):
+    """
+    Test that transactions with missing or null Customer IDs are filtered out.
+    """
+    
+    csv_file = tmp_path / "sample_retail_nulls.csv"
+
+    csv_file.write_text(
+        "Invoice,StockCode,Description,Quantity,InvoiceDate,Price,Customer ID,Country\n"
+        "489434,85048,TEA SPOONS,6,2009-12-01 07:45,2.55,13085,United Kingdom\n"
+        "489435,85049,COFFEE SPOONS,2,2009-12-01 07:50,1.50,,United Kingdom\n"
+        "489436,85050,SUGAR SPOONS,1,2009-12-01 07:55,3.00,NULL,United Kingdom\n"
+        "489437,85051,CREAM JUG,4,2009-12-01 08:00,4.25, ,United Kingdom\n"
+    )
+    
+    db_file = str(tmp_path / "test_retail.duckdb")
+    
+    valid_rows = run_cleaning_pipeline(db_path=db_file, csv_path=str(csv_file))
+    
+    assert valid_rows == 1
+    
+    import duckdb
+    conn = duckdb.connect(db_file)
+    customer_ids = conn.execute("SELECT \"Customer ID\" FROM clean_transactions;").fetchall()
+    conn.close()
+    
+    assert len(customer_ids) == 1
+    assert customer_ids[0][0] == '13085'

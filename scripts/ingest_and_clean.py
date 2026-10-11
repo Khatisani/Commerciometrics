@@ -61,5 +61,37 @@ def run_ingestion(db_path: str = DEFAULT_DB_PATH, csv_path: str = DEFAULT_CSV_PA
     conn.close()
     return row_count
 
+def run_cleaning_pipeline(db_path: str = DEFAULT_DB_PATH, csv_path: str = DEFAULT_CSV_PATH) -> int:
+    """
+    Ingests raw data and filters out rows with missing, null, or empty Customer IDs,
+    storing the result in a new 'clean_transactions' table.
+    
+    Returns:
+    --------
+    int
+        Total number of valid rows after cleaning.
+    """
+
+    run_ingestion(db_path=db_path, csv_path=csv_path)
+    
+    conn = duckdb.connect(db_path)
+    
+    print("Filtering out rows with missing or null Customer IDs...")
+
+    conn.execute("""
+        CREATE OR REPLACE TABLE clean_transactions AS 
+        SELECT * FROM raw_transactions 
+        WHERE "Customer ID" IS NOT NULL 
+          AND TRIM(CAST("Customer ID" AS VARCHAR)) != ''
+          AND UPPER(TRIM(CAST("Customer ID" AS VARCHAR))) != 'NULL'
+          AND UPPER(TRIM(CAST("Customer ID" AS VARCHAR))) != 'NAN';
+    """)
+    
+    clean_row_count = int(conn.execute("SELECT COUNT(*) FROM clean_transactions;").fetchone()[0])
+    print(f"Cleaning complete! Retained {clean_row_count:,} valid customer transaction rows.")
+    
+    conn.close()
+    return clean_row_count
+
 if __name__ == "__main__":
-    run_ingestion()
+    run_cleaning_pipeline()
