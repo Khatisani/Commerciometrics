@@ -3,8 +3,6 @@ Module: test_behavioral_aggregation.py
 Description: Unit tests for aggregating Tenure, Latency, and Diversity into a unified customer behavioral table.
 """
 
-import os
-import pytest
 import duckdb
 from scripts.aggregate_behavioral import aggregate_customer_behavioral
 
@@ -13,7 +11,7 @@ def test_aggregate_customer_behavioral(tmp_path):
     Test that individual behavioral features are correctly joined into a single customer feature table.
     """
 
-    
+
     db_file = str(tmp_path / "test_behavioral.duckdb")
     
     conn = duckdb.connect(db_file)

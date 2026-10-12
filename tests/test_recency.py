@@ -3,8 +3,6 @@ Module: test_recency.py
 Description: Unit tests for customer Recency calculation.
 """
 
-import os
-import pytest
 import duckdb
 from scripts.compute_recency import compute_customer_recency
 

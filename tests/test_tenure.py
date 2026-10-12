@@ -3,8 +3,6 @@ Module: test_tenure.py
 Description: Unit tests for customer Tenure calculation (days between first and last purchase).
 """
 
-import os
-import pytest
 import duckdb
 from scripts.compute_tenure import compute_customer_tenure
 
@@ -12,7 +10,7 @@ def test_compute_customer_tenure(tmp_path):
     """
     Test that customer tenure is correctly calculated as days between first and last purchase.
     """
-    
+
     parquet_file = tmp_path / "clean_transactions.parquet"
     db_file = str(tmp_path / "test_tenure.duckdb")
     

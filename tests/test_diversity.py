@@ -3,8 +3,6 @@ Module: test_diversity.py
 Description: Unit tests for customer product diversity (unique stock code count).
 """
 
-import os
-import pytest
 import duckdb
 from scripts.compute_diversity import compute_customer_diversity
 
@@ -28,7 +26,7 @@ def test_compute_customer_diversity(tmp_path):
                 ('INV-06', 'E5', 1, 25.0, 'Cust_B', '2010-12-04 15:00:00'::TIMESTAMP)
         ) AS t(Invoice, StockCode, Quantity, Price, CustomerID, InvoiceDate);
     """)
-    
+
     conn.execute(f"COPY mock_tx TO '{parquet_file}' (FORMAT PARQUET);")
     conn.close()
     

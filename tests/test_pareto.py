@@ -3,8 +3,6 @@ Module: test_pareto.py
 Description: Unit tests for customer Pareto revenue concentration analysis.
 """
 
-import os
-import pytest
 import duckdb
 from scripts.compute_pareto import compute_customer_pareto
 

@@ -3,8 +3,6 @@ Module: test_churn.py
 Description: Unit tests for baseline historical churn rate calculation using a 90-day threshold.
 """
 
-import os
-import pytest
 import duckdb
 from scripts.compute_churn import compute_baseline_churn
 

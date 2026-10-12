@@ -3,8 +3,6 @@ Module: test_latency.py
 Description: Unit tests for purchase latency average and variance between consecutive orders.
 """
 
-import os
-import pytest
 import duckdb
 from scripts.compute_latency import compute_customer_latency
 

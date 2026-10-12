@@ -3,8 +3,6 @@ Module: test_frequency.py
 Description: Unit tests for customer Frequency calculation (unique invoice count).
 """
 
-import os
-import pytest
 import duckdb
 from scripts.compute_frequency import compute_customer_frequency
 

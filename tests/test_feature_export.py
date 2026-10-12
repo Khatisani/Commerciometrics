@@ -4,7 +4,6 @@ Description: Unit tests for exporting the customer feature store table to a comp
 """
 
 import os
-import pytest
 import duckdb
 from scripts.export_features import export_customer_features
 
@@ -12,7 +11,7 @@ def test_export_customer_features(tmp_path):
     """
     Test that customer feature store table exports correctly to a compressed parquet file.
     """
-    
+
     db_file = str(tmp_path / "test_export.duckdb")
     parquet_out = tmp_path / "customer_features.parquet"
     

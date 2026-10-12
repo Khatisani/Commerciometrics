@@ -3,8 +3,6 @@ Module: test_timeline.py
 Description: Unit tests for timeline boundary extraction (min and max transaction dates).
 """
 
-import os
-import pytest
 import duckdb
 from scripts.compute_timeline import get_dataset_timeline
 

@@ -3,8 +3,6 @@ Module: test_rfm_aggregation.py
 Description: Unit tests for aggregating Recency, Frequency, and Monetary features into a unified customer feature table.
 """
 
-import os
-import pytest
 import duckdb
 from scripts.aggregate_rfm import aggregate_customer_rfm
 

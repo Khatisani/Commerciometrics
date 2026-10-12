@@ -3,8 +3,6 @@ Module: test_feature_matrix_join.py
 Description: Unit tests for joining customer features and 90-day churn target labels into a master feature matrix.
 """
 
-import os
-import pytest
 import duckdb
 from scripts.build_feature_matrix import build_customer_feature_matrix
 
@@ -12,7 +10,7 @@ def test_build_customer_feature_matrix(tmp_path):
     """
     Test that RFM, behavioral, and target tables successfully join into a master feature matrix.
     """
-    
+
     db_file = str(tmp_path / "test_matrix.duckdb")
     
     conn = duckdb.connect(db_file)

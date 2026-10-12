@@ -3,8 +3,6 @@ Module: test_monetary.py
 Description: Unit tests for customer Monetary value calculation (total lifetime spend).
 """
 
-import os
-import pytest
 import duckdb
 from scripts.compute_monetary import compute_customer_monetary
 
