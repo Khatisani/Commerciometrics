@@ -1,0 +1,40 @@
+{
+    "model_type": "LightGBM",
+    "run_id": "f1a0a4c2a6014ae886d5733b248e7b74",
+    "test_samples": 859,
+    "roc_auc": 1.0,
+    "pr_auc": 1.0,
+    "f1_score": 1.0,
+    "confusion_matrix": [
+        [
+            575,
+            0
+        ],
+        [
+            0,
+            284
+        ]
+    ],
+    "top_features": [
+        {
+            "feature": "recency_days",
+            "importance": 3
+        },
+        {
+            "feature": "frequency",
+            "importance": 0
+        },
+        {
+            "feature": "monetary_value",
+            "importance": 0
+        },
+        {
+            "feature": "tenure_days",
+            "importance": 0
+        },
+        {
+            "feature": "avg_latency_days",
+            "importance": 0
+        }
+    ]
+}
