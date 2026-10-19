@@ -31,8 +31,12 @@ def build_customer_feature_matrix(db_path: str = DEFAULT_DB_PATH) -> pd.DataFram
     conn = duckdb.connect(db_path)
     
     print("Building master customer feature matrix with churn target labels...")
-    
-    query = """
+
+    tables = [row[0] for row in conn.execute("SHOW TABLES;").fetchall()]
+    churn_table = "customer_churn_status" if "customer_churn_status" in tables else "feature_target"
+    print(f"Using churn target table: '{churn_table}'")
+
+    query = f"""
         SELECT 
             rfm.CustomerID,
             rfm.recency_days,
@@ -45,10 +49,10 @@ def build_customer_feature_matrix(db_path: str = DEFAULT_DB_PATH) -> pd.DataFram
             tgt.is_churned
         FROM customer_rfm rfm
         LEFT JOIN customer_behavioral beh ON rfm.CustomerID = beh.CustomerID
-        LEFT JOIN feature_target tgt ON rfm.CustomerID = tgt.CustomerID
+        LEFT JOIN {churn_table} tgt ON rfm.CustomerID = tgt.CustomerID
         ORDER BY rfm.monetary_value DESC;
     """
-    
+
     df = conn.execute(query.strip()).fetchdf()
     
     conn.execute("CREATE OR REPLACE TABLE customer_feature_matrix AS SELECT * FROM df;")

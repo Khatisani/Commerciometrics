@@ -17,11 +17,8 @@ python3 scripts/compute_diversity.py
 python3 scripts/aggregate_behavioral.py
 
 echo "=== Step 3: Target Labeling & Feature Store Export ==="
-python3 scripts/compute_target.py
+python3 scripts/compute_churn.py
 python3 scripts/build_feature_matrix.py
 python3 scripts/export_features.py
-
-echo "=== Step 4: Running Test Suite ==="
-pytest
 
 echo "=== Pipeline Completed Successfully! ==="

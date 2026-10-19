@@ -39,17 +39,23 @@ def run_ingestion(db_path: str = DEFAULT_DB_PATH, csv_path: str = DEFAULT_CSV_PA
     
     os.makedirs(os.path.dirname(db_path), exist_ok=True)
     
-    print(f"Reading CSV via pandas (using python engine and skipping bad lines) from {csv_path}...")
+    with open(csv_path, "rb") as f:
+        header = f.read(4)
     
-    df = pd.read_csv(
-        csv_path, 
-        encoding='latin-1', 
-        dtype=str, 
-        on_bad_lines='skip',
-        encoding_errors='replace',
-        engine='python'
-    )
-    
+    if header.startswith(b"PK\x03\x04"):
+        print(f"Detected Excel/Zip archive format at {csv_path}. Reading via pd.read_excel...")
+        df = pd.read_excel(csv_path, sheet_name=0, dtype=str)
+    else:
+        print(f"Reading CSV via pandas from {csv_path}...")
+        df = pd.read_csv(
+            csv_path, 
+            encoding='latin-1', 
+            dtype=str, 
+            on_bad_lines='skip',
+            encoding_errors='replace',
+            engine='python'
+        )
+        
     print(f"Connecting to DuckDB at {db_path}...")
     conn = duckdb.connect(db_path)
     
@@ -76,16 +82,23 @@ def run_cleaning_pipeline(db_path: str = DEFAULT_DB_PATH, csv_path: str = DEFAUL
     run_ingestion(db_path=db_path, csv_path=csv_path)
     
     conn = duckdb.connect(db_path)
-    
-    print("Filtering out rows with missing or null Customer IDs...")
 
-    conn.execute("""
+    columns = [col[0] for col in conn.execute("DESCRIBE raw_transactions;").fetchall()]
+    cust_col_candidates = ["Customer ID", "CustomerID", "Customer_ID"]
+    cust_col = next((c for c in cust_col_candidates if c in columns), None)
+    
+    if not cust_col:
+        cust_col = next((c for c in columns if "customer" in c.lower() and "id" in c.lower()), columns[6] if len(columns) > 6 else "Customer ID")
+
+    print(f"Filtering out rows with missing or null Customer IDs using column: '{cust_col}'...")
+
+    conn.execute(f"""
         CREATE OR REPLACE TABLE clean_transactions AS 
         SELECT * FROM raw_transactions 
-        WHERE "Customer ID" IS NOT NULL 
-          AND TRIM(CAST("Customer ID" AS VARCHAR)) != ''
-          AND UPPER(TRIM(CAST("Customer ID" AS VARCHAR))) != 'NULL'
-          AND UPPER(TRIM(CAST("Customer ID" AS VARCHAR))) != 'NAN';
+        WHERE "{cust_col}" IS NOT NULL 
+          AND TRIM(CAST("{cust_col}" AS VARCHAR)) != ''
+          AND UPPER(TRIM(CAST("{cust_col}" AS VARCHAR))) != 'NULL'
+          AND UPPER(TRIM(CAST("{cust_col}" AS VARCHAR))) != 'NAN';
     """)
     
     clean_row_count = int(conn.execute("SELECT COUNT(*) FROM clean_transactions;").fetchone()[0])
@@ -109,8 +122,11 @@ def run_casting_pipeline(db_path: str = DEFAULT_DB_PATH, csv_path: str = DEFAULT
     
     conn = duckdb.connect(db_path)
     
-    print("Casting columns to appropriate data types (Quantity -> INTEGER, Price -> DECIMAL, InvoiceDate -> TIMESTAMP)...")
-    conn.execute("""
+    columns = [col[0] for col in conn.execute("DESCRIBE clean_transactions;").fetchall()]
+    cust_col = next((c for c in columns if "customer" in c.lower() and "id" in c.lower()), "Customer ID")
+    
+    print(f"Casting columns to appropriate data types (Customer column detected: '{cust_col}')...")
+    conn.execute(f"""
         CREATE OR REPLACE TABLE typed_transactions AS 
         SELECT 
             CAST(Invoice AS VARCHAR) AS Invoice,
@@ -119,7 +135,7 @@ def run_casting_pipeline(db_path: str = DEFAULT_DB_PATH, csv_path: str = DEFAULT
             CAST(Quantity AS INTEGER) AS Quantity,
             CAST(InvoiceDate AS TIMESTAMP) AS InvoiceDate,
             CAST(Price AS DECIMAL(10,2)) AS Price,
-            CAST("Customer ID" AS VARCHAR) AS CustomerID,
+            CAST("{cust_col}" AS VARCHAR) AS CustomerID,
             CAST(Country AS VARCHAR) AS Country
         FROM clean_transactions;
     """)
