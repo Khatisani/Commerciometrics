@@ -23,6 +23,38 @@ To identify customers who are quietly slipping away, the feature engineering pip
 
 ---
 
+## Data Source
+
+- Name: Online Retail II dataset (online_retail_II.csv / .xlsx)
+
+- Timeframe: Contains all transactions occurring between 01/12/2009 and 09/12/2011.
+
+- Origin: A real-world transactional archive from a UK-based, non-store online retail company specializing in all-occasion giftware (with many wholesale buyers).
+
+- Scale: Over 1 million rows of multi-year point-of-sale telemetry.
+
+### Columns
+
+- InvoiceNo: A unique 6-digit invoice number assigned to each transaction (codes starting with 'C' indicate cancellations/returns).
+
+- StockCode: A unique 5-digit product code assigned to each distinct item.
+
+- Description: The name/description of the product.
+
+- Quantity: The number of units purchased per transaction line item.
+
+- InvoiceDate: The exact date and timestamp when the transaction occurred.
+
+- UnitPrice: The price of the product per unit in British Pounds (£).
+
+- CustomerID: A unique 5-digit code identifying each distinct customer.
+
+- Country: The country where the customer resides.
+
+
+---
+
+
 ### Pipeline Flow: Input, Processing & Output
 
 1. **Input (Raw Staging):**
@@ -88,6 +120,5 @@ pip install -r requirements.txt
 cntrl +x run_pipeline.sh
 ./run_pipeline.sh
 ```
-
 
 
