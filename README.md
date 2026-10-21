@@ -1,9 +1,48 @@
 # Commerciometrics
-Commercial analytics: an automated data pipeline that takes raw transaction data and transforms it into a clean, machine-learning-ready feature store.
+Catch cusomers that are slipping away.
 
 Customers come and go, but every once in a while, regular buyers just quietly stop showing up. By the time you notice they're gone, it's already too late to win them back.
 
 Retailers have mountains of raw transaction logs, but turning that messy data into actual insights—like figuring out who's about to churn—is a massive headache. Raw files come in weird formats, data gets corrupted, and building features like customer tenure or how long someone waits between purchases takes a ton of heavy lifting.
+
+Can we predict if we are going to lose a customer?
+
+---
+
+<p align="center">
+  <img src="assets/dashboard_screenshot.png" alt="Dashboard Preview" width="800">
+</p>
+
+
+### Key Behavioral Trends Tracked
+To identify customers who are quietly slipping away, the feature engineering pipeline extracts key behavioral indicators:
+* **Recency:** Measures the time gap since a customer's last purchase against their historical purchasing rhythm.
+* **Frequency:** Tracks how often a customer buys over time to detect breakdowns in shopping routines.
+* **Monetary Value:** Analyzes total spend and basket size to catch "shrinking baskets" where customers shift their primary business elsewhere.
+* **Tenure & Latency:** Captures customer lifecycle duration and average time gaps between consecutive transactions.
+
+---
+
+### Pipeline Flow: Input, Processing & Output
+
+1. **Input (Raw Staging):**
+   * Massive, raw transactional logs containing timestamped line items, product codes, quantities, unit prices, and customer loyalty IDs.
+2. **Processing (DuckDB & Parquet ETL):**
+   * **Cleaning:** Filters out canceled orders, missing customer identifiers, and pricing anomalies.
+   * **Transformation:** Leverages SQL and window functions via DuckDB to aggregate customer behavioral features.
+   * **Storage:** Persists validated data into highly compressed, columnar **Parquet** files for lightning-fast execution and reproducible state management.
+3. **Output (Modeling & Interface):**
+   * **Machine Learning:** Trains optimized classifiers with class-imbalance adjustments (`scale_pos_weight`) tracked via **MLflow**.
+   * **Decision Delivery:** Serves predictions through a custom, interactive **Streamlit dashboard** that flags high-risk customers and provides automated retention action recommendations.
+
+---
+
+### Tech Stack & Architecture Highlights
+
+* **DuckDB:** Analytical database engine used to run high-speed SQL queries directly on local data files without requiring a heavy server infrastructure.
+* **Parquet:** Columnar storage format with Snappy compression that optimizes read speeds and preserves rigid data types.
+* **MLflow:** Experiment tracking framework used to log parameters, metrics (PR-AUC, F1, ROC-AUC), and serialized model artifacts.
+* **LightGBM:** High-performance gradient-boosted decision tree framework optimized for tabular retail classification and handling class imbalance.
 
 ## Project Structure
 
